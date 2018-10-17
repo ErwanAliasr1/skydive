@@ -30,6 +30,7 @@ import (
 	"github.com/skydive-project/skydive/logging"
 	"github.com/skydive-project/skydive/probe"
 	"github.com/skydive-project/skydive/topology/graph"
+	"github.com/skydive-project/skydive/topology/probes/ceph"
 	"github.com/skydive-project/skydive/topology/probes/docker"
 	"github.com/skydive-project/skydive/topology/probes/lldp"
 	"github.com/skydive-project/skydive/topology/probes/lxd"
@@ -107,6 +108,12 @@ func NewTopologyProbeBundleFromConfig(g *graph.Graph, hostNode *graph.Node) (*pr
 			probes[t] = opencontrail
 		case "socketinfo":
 			probes[t] = socketinfo.NewSocketInfoProbe(g, hostNode)
+		case "ceph":
+			cephAgentProbe, err := ceph.NewAgentProbe(g, hostNode)
+			if err != nil {
+				return nil, fmt.Errorf("Failed to initialize Ceph Agent probe: %s", err)
+			}
+			probes[t] = cephAgentProbe
 		default:
 			logging.GetLogger().Errorf("unknown probe type %s", t)
 		}

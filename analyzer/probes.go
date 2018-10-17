@@ -27,6 +27,7 @@ import (
 	"github.com/skydive-project/skydive/logging"
 	"github.com/skydive-project/skydive/probe"
 	"github.com/skydive-project/skydive/topology/graph"
+	"github.com/skydive-project/skydive/topology/probes/ceph"
 	"github.com/skydive-project/skydive/topology/probes/fabric"
 	"github.com/skydive-project/skydive/topology/probes/istio"
 	"github.com/skydive-project/skydive/topology/probes/k8s"
@@ -39,6 +40,7 @@ func NewTopologyProbeBundleFromConfig(g *graph.Graph) (*probe.Bundle, error) {
 	probes := map[string]probe.Probe{
 		"fabric":  fabric.NewProbe(g),
 		"peering": peering.NewProbe(g),
+		"ceph":    ceph.NewAnalyzerProbe(g),
 	}
 
 	for _, t := range list {
