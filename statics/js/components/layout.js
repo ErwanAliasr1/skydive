@@ -48,6 +48,8 @@ var nodeImgMap = setupFixedImages({
   "storageclass": "storageclass",
   // istio
   "destinationrule": "destinationrule",
+  // ceph
+  "OSD": "ceph",
 });
 
 var managerImgMap = setupFixedImages({
@@ -56,4 +58,5 @@ var managerImgMap = setupFixedImages({
   "neutron": "openstack",
   "k8s": "k8s",
   "istio": "istio",
+  "ceph": "ceph",
 });

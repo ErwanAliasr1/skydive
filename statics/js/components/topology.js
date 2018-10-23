@@ -194,6 +194,10 @@ var TopologyComponent = {
                title="Docker">\
           <object-detail :object="currentNodeDocker"></object-detail>\
         </panel>\
+        <panel id="ceph-metadata" v-if="currentNodeCeph"\
+               title="Ceph">\
+          <object-detail :object="currentNodeCeph"></object-detail>\
+        </panel>\
         <panel id="k8s-metadata" v-if="currentNodeK8s"\
                title="K8s">\
           <object-detail :object="currentNodeK8s"></object-detail>\
@@ -415,7 +419,7 @@ var TopologyComponent = {
     currentNodeMetadata: function() {
       if (!this.currentNode) return null;
       return this.extractMetadata(this.currentNode.metadata,
-        ['LastUpdateMetric', 'Metric', 'Ovs.Metric', 'Ovs.LastUpdateMetric', 'RoutingTable', 'Features', 'K8s', 'Docker']);
+        ['LastUpdateMetric', 'Metric', 'Ovs.Metric', 'Ovs.LastUpdateMetric', 'RoutingTable', 'Features', 'K8s', 'Docker', 'Ceph']);
     },
 
     currentNodeFlowsQuery: function() {
@@ -427,6 +431,11 @@ var TopologyComponent = {
     currentNodeDocker: function() {
       if (!this.currentNodeMetadata || !this.currentNode.metadata.Docker) return null;
       return this.currentNode.metadata.Docker;
+    },
+
+    currentNodeCeph: function() {
+      if (!this.currentNodeMetadata || !this.currentNode.metadata.Ceph) return null;
+      return this.currentNode.metadata.Ceph;
     },
 
     currentNodeK8s: function() {

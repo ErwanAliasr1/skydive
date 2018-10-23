@@ -64,7 +64,9 @@ func graphOSD(p *Probe, osd OSD) bool {
 		"Manager": "ceph",
 		"Type":    "OSD",
 		"Name":    osdName,
-		"config":  osd,
+		"Ceph": map[string]interface{}{
+			"OSD": osd,
+		},
 	}
 
 	if len(osd.FrontIface) > 0 {
