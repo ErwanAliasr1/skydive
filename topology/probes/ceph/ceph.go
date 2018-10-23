@@ -32,6 +32,7 @@ import (
 
 //GetCephMetadata to read all the possible ceph information for the host
 func GetCephMetadata(s *InfoProbe) {
+	ReadCluster(s)
 	ReadOSD(s)
 }
 

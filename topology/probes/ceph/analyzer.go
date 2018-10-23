@@ -38,6 +38,7 @@ type Probe struct {
 	graph.DefaultGraphListener
 	graph    *graph.Graph
 	peers    map[string]*graph.Node
+	cluster  CLUSTER
 	clusters map[string]string
 }
 
@@ -110,24 +111,24 @@ func graphOSD(p *Probe, osd OSD) bool {
 	return true
 }
 
-func graphOSDs(p *Probe, n *graph.Node) {
+func graphOSDs(p *Probe, n *graph.Node) bool {
 	var osds []OSD
 	if metadata, _ := n.GetField("Software.Ceph.OSD.metadata"); metadata != nil {
-		if p.clusters["ceph"] == metadata.(string) {
-			logging.GetLogger().Infof("Cluster ceph is already graphed")
-			return
+		if p.clusters[p.cluster.Fsid] == metadata.(string) {
+			logging.GetLogger().Infof("Cluster ceph %s is already graphed", p.cluster.Fsid)
+			return false
 		}
 		by, err := base64.StdEncoding.DecodeString(metadata.(string))
 		if err != nil {
 			logging.GetLogger().Errorf(`failed base64 Decode : %s`, err)
-			return
+			return false
 		}
 		b := bytes.Buffer{}
 		b.Write(by)
 		d := gob.NewDecoder(&b)
 		if err := d.Decode(&osds); err != nil {
 			logging.GetLogger().Errorf(`failed to Decode : %s`, err)
-			return
+			return false
 		}
 		if len(osds) > 0 {
 			//logging.GetLogger().Infof("onNodeEvent Received %#v", osds)
@@ -141,16 +142,24 @@ func graphOSDs(p *Probe, n *graph.Node) {
 					everythingGraphed = false
 				}
 			}
-			if everythingGraphed == true {
-				p.clusters["ceph"] = metadata.(string)
-			} else {
-				logging.GetLogger().Infof("OSD Graphing aborted because of missing nodes")
+			if everythingGraphed == false {
+				logging.GetLogger().Infof("OSD graphing of cluster %s aborted because of missing nodes", p.cluster.Fsid)
+				return false
 			}
+			// This is the only place where we know the cluster is perfectly rendered
+			p.clusters[p.cluster.Fsid] = metadata.(string)
+			logging.GetLogger().Infof("Ceph cluster %s is rendered", p.cluster.Fsid)
+			return true
 		}
 	}
+	return false
 }
 
 func (p *Probe) onNodeEvent(n *graph.Node) {
+	graphCluster(p, n)
+	if len(p.cluster.Fsid) == 0 {
+		return
+	}
 	graphOSDs(p, n)
 }
 
@@ -161,13 +170,13 @@ func (p *Probe) OnNodeUpdated(n *graph.Node) {
 
 // OnNodeAdded event
 func (p *Probe) OnNodeAdded(n *graph.Node) {
-	p.clusters["ceph"] = ""
+	p.clusters[p.cluster.Fsid] = ""
 	p.onNodeEvent(n)
 }
 
 // OnNodeDeleted event
 func (p *Probe) OnNodeDeleted(n *graph.Node) {
-	p.clusters["ceph"] = ""
+	p.clusters[p.cluster.Fsid] = ""
 }
 
 // Start the probe
