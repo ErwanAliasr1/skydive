@@ -32,7 +32,7 @@ type Probe struct {
 	graph    *graph.Graph
 	peers    map[string]*graph.Node
 	cluster  CLUSTER
-	clusters map[string]string
+	osds    map[string]string
 }
 
 func (p *Probe) onNodeEvent(n *graph.Node) {
@@ -50,13 +50,13 @@ func (p *Probe) OnNodeUpdated(n *graph.Node) {
 
 // OnNodeAdded event
 func (p *Probe) OnNodeAdded(n *graph.Node) {
-	p.clusters[p.cluster.Fsid] = ""
+	p.osds[p.cluster.Fsid] = ""
 	p.onNodeEvent(n)
 }
 
 // OnNodeDeleted event
 func (p *Probe) OnNodeDeleted(n *graph.Node) {
-	p.clusters[p.cluster.Fsid] = ""
+	p.osds[p.cluster.Fsid] = ""
 }
 
 // Start the probe
@@ -73,7 +73,7 @@ func NewAnalyzerProbe(g *graph.Graph) *Probe {
 	probe := &Probe{
 		graph:    g,
 		peers:    make(map[string]*graph.Node),
-		clusters: make(map[string]string),
+		osds:  make(map[string]string),
 	}
 	g.AddEventListener(probe)
 

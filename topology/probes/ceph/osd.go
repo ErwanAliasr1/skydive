@@ -172,7 +172,7 @@ func graphOSD(p *Probe, osd OSD) bool {
 func graphOSDs(p *Probe, n *graph.Node) bool {
 	var osds []OSD
 	if metadata, _ := n.GetField("Software.Ceph.OSD.metadata"); metadata != nil {
-		if p.clusters[p.cluster.Fsid] == metadata.(string) {
+		if p.osds[p.cluster.Fsid] == metadata.(string) {
 			logging.GetLogger().Infof("Cluster ceph %s is already graphed", p.cluster.Fsid)
 			return false
 		}
@@ -205,7 +205,7 @@ func graphOSDs(p *Probe, n *graph.Node) bool {
 				return false
 			}
 			// This is the only place where we know the cluster is perfectly rendered
-			p.clusters[p.cluster.Fsid] = metadata.(string)
+			p.osds[p.cluster.Fsid] = metadata.(string)
 			logging.GetLogger().Infof("Ceph cluster %s is rendered", p.cluster.Fsid)
 			return true
 		}
