@@ -49,7 +49,8 @@ var nodeImgMap = setupFixedImages({
   // istio
   "destinationrule": "destinationrule",
   // ceph
-  "OSD": "ceph",
+  "OSD": "OSD",
+  "MON": "MON",
 });
 
 var managerImgMap = setupFixedImages({
