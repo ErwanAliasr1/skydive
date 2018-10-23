@@ -29,10 +29,11 @@ import (
 // Probe describes graph peering based on MAC address and graph events
 type Probe struct {
 	graph.DefaultGraphListener
-	graph    *graph.Graph
-	peers    map[string]*graph.Node
-	cluster  CLUSTER
+	graph   *graph.Graph
+	peers   map[string]*graph.Node
+	cluster CLUSTER
 	osds    map[string]string
+	mons    map[string]string
 }
 
 func (p *Probe) onNodeEvent(n *graph.Node) {
@@ -41,6 +42,7 @@ func (p *Probe) onNodeEvent(n *graph.Node) {
 		return
 	}
 	graphOSDs(p, n)
+	graphMons(p, n)
 }
 
 // OnNodeUpdated event
@@ -51,12 +53,14 @@ func (p *Probe) OnNodeUpdated(n *graph.Node) {
 // OnNodeAdded event
 func (p *Probe) OnNodeAdded(n *graph.Node) {
 	p.osds[p.cluster.Fsid] = ""
+	p.mons[p.cluster.Fsid] = ""
 	p.onNodeEvent(n)
 }
 
 // OnNodeDeleted event
 func (p *Probe) OnNodeDeleted(n *graph.Node) {
 	p.osds[p.cluster.Fsid] = ""
+	p.mons[p.cluster.Fsid] = ""
 }
 
 // Start the probe
@@ -71,9 +75,10 @@ func (p *Probe) Stop() {
 // NewAnalyzerProbe update graph to represent a ceph cluster
 func NewAnalyzerProbe(g *graph.Graph) *Probe {
 	probe := &Probe{
-		graph:    g,
-		peers:    make(map[string]*graph.Node),
+		graph: g,
+		peers: make(map[string]*graph.Node),
 		osds:  make(map[string]string),
+		mons:  make(map[string]string),
 	}
 	g.AddEventListener(probe)
 

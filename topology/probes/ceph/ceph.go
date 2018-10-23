@@ -34,6 +34,7 @@ import (
 func GetCephMetadata(s *InfoProbe) {
 	ReadCluster(s)
 	ReadOSD(s)
+	ReadMons(s)
 }
 
 // InfoProbe describes a ceph cluster
