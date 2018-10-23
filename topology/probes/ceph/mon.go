@@ -29,7 +29,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"os/exec"
+	"regexp"
 
+	"github.com/skydive-project/skydive/filters"
 	"github.com/skydive-project/skydive/logging"
 	"github.com/skydive-project/skydive/topology"
 	"github.com/skydive-project/skydive/topology/graph"
@@ -95,6 +97,46 @@ func graphMon(p *Probe, mon MON) bool {
 	logging.GetLogger().Infof("%s: Adding Mon %s", mon.Hostname, monName)
 	containerNode := p.graph.NewNode(graph.Identifier(nodeName), metadata)
 	topology.AddOwnershipLink(p.graph, lookupNode, containerNode, nil)
+
+	// If there is no mon addr, it's over.
+	if len(mon.Addr) <= 0 {
+		return true
+	}
+
+	// Let's connect the MON to its network interface
+	// 10.41.61.43:6789/0
+	match := regexp.MustCompile("([0-9]*.[0-9]*.[0-9]*.[0-9]*):[0-9]*(/[0-9]*)").FindStringSubmatch(mon.Addr)
+	if len(match) != 3 || len(match[1]) == 0 {
+		logging.GetLogger().Errorf("Cannot extract IP address from %s", mon.Addr)
+		return false
+	}
+
+	// monIP is then under the 10.41.61.43/24 form
+	// Considering /32 as we have no way to find the original cidr mask
+	monIP := fmt.Sprintf("%s%s", match[1], "/32")
+
+	// Let's connect the MON to its binded interface
+	logging.GetLogger().Infof("Looking for %s", monIP)
+	ipFilter, _ := filters.NewIPV4RangeFilter("IPV4", monIP)
+	// Describe what is a physical network interface, in this right ip range
+	m := graph.NewElementFilter(filters.NewAndFilter(
+		filters.NewTermStringFilter("Type", "device"),
+		&filters.Filter{IPV4RangeFilter: ipFilter},
+		filters.NewNotFilter(filters.NewTermStringFilter("EncapType", "loopback"))))
+	// Find the node object that match this Network Interface
+	monIface := p.graph.LookupFirstChild(lookupNode, m)
+	if monIface == nil {
+		logging.GetLogger().Errorf("Cannot find a valid interface for %s", monName)
+		return false
+	}
+	connectedIface, _ := monIface.GetField("Name")
+	logging.GetLogger().Infof("Connecting Mon %s to interface %s", monName, connectedIface)
+	monIfaceMetadata := graph.Metadata{
+		"Type":    "socket",
+		"Address": mon.Addr,
+	}
+	p.graph.Link(containerNode, monIface, monIfaceMetadata)
+
 	return true
 }
 
