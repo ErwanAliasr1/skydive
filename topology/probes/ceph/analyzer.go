@@ -23,6 +23,7 @@
 package ceph
 
 import (
+	"github.com/skydive-project/skydive/logging"
 	"github.com/skydive-project/skydive/topology/graph"
 )
 
@@ -34,6 +35,20 @@ type Probe struct {
 	cluster CLUSTER
 	osds    map[string]string
 	mons    map[string]string
+}
+
+// delCephNode removes nodes from graph
+func delCephNodes(p *Probe, n *graph.Node) bool {
+	metadata := graph.Metadata{"Manager": "ceph"}
+	mon := p.graph.LookupFirstChild(n, metadata)
+	if mon != nil {
+		monName, _ := mon.GetField("Name")
+		logging.GetLogger().Infof("Deleting %s", monName)
+		p.osds[p.cluster.Fsid] = ""
+		p.mons[p.cluster.Fsid] = ""
+		return p.graph.DelNode(mon)
+	}
+	return true
 }
 
 func (p *Probe) onNodeEvent(n *graph.Node) {
@@ -61,6 +76,7 @@ func (p *Probe) OnNodeAdded(n *graph.Node) {
 func (p *Probe) OnNodeDeleted(n *graph.Node) {
 	p.osds[p.cluster.Fsid] = ""
 	p.mons[p.cluster.Fsid] = ""
+	delCephNodes(p, n)
 }
 
 // Start the probe
